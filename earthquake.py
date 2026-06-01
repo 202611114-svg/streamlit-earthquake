@@ -12,7 +12,6 @@ st.set_page_config(
 # 2. 데이터 로드 함수 (캐싱 적용으로 페이지 새로고침 시 속도 저하 방지)
 @st.cache_data
 def load_data():
-    # 데이터 파일 이름이 다르면 에러가 나므로 정확히 매핑
     df = pd.read_csv("earthquake.csv")
     # 딕셔너리 키(Key) 매핑 에러 방지를 위해 cluster 타입을 정수형으로 강제 변환
     df['cluster'] = df['cluster'].astype(int)
@@ -67,13 +66,13 @@ with col2:
             # 6. Folium 지도 초기화 (사용자가 입력한 위경도 중심)
             m = folium.Map(location=[lat, lon], zoom_start=4, tiles="CartoDB positron")
 
-            # 7. 과거 데이터 샘플링 (요청하신 5,000개 추출)
-            df_sample = df_new.sample(n=min(5000, len(df_new)), random_state=42)
+            # 7. 과거 데이터 샘플링 (★요청하신 대로 5,000개에서 500개로 축소★)
+            df_sample = df_new.sample(n=min(500, len(df_new)), random_state=42)
 
-            # 8. 지도에 샘플링된 지진 점 찍기 (df_new 참조 버그 완벽 수정)
+            # 8. 지도에 샘플링된 지진 점 찍기 (속도가 훨씬 빨라집니다)
             for i in range(len(df_sample)):
                 cluster = df_sample.iloc[i]['cluster']
-                marker_color = colors.get(cluster, 'gray')  # 정의되지 않은 예외 군집 방어 코드
+                marker_color = colors.get(cluster, 'gray')
 
                 folium.CircleMarker(
                     location=[df_sample.iloc[i]['위도'], df_sample.iloc[i]['경도']],
@@ -84,7 +83,7 @@ with col2:
                     fill_opacity=0.6
                 ).add_to(m)
 
-            # 9. 사용자가 입력한 현재 타겟 위치에 검은색 검은 별(Star) 마커 찍기
+            # 9. 사용자가 입력한 현재 타겟 위치에 검은색 별(Star) 마커 찍기
             folium.Marker(
                 location=[lat, lon],
                 popup="분석 요청 위치",
